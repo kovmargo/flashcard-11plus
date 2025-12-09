@@ -312,56 +312,77 @@ elif st.session_state.view == 'study':
     # Card display
     card = st.session_state.shuffled_cards[st.session_state.current_card]
     
-    if not st.session_state.is_flipped:
-        st.markdown(f"""
-        <div class="card-container">
-            <h4 style='opacity: 0.8; font-size: 14px; text-transform: uppercase;'>WORD</h4>
-            <h1 style='font-size: 48px; margin: 30px 0;'>{card['word']}</h1>
-            <p style='font-size: 18px; opacity: 0.9;'>👆 Tap 'Flip Card' to reveal definition</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""
-        <div class="card-container">
-            <h4 style='opacity: 0.8; font-size: 14px; text-transform: uppercase;'>DEFINITION</h4>
-            <h2 style='font-size: 28px; margin: 20px 0;'>{card['definition']}</h2>
-            <div style='background: rgba(255,255,255,0.2); padding: 20px; border-radius: 10px; margin-top: 30px;'>
-                <h4 style='opacity: 0.8; font-size: 14px; text-transform: uppercase;'>EXAMPLE</h4>
-                <p style='font-size: 18px; font-style: italic;'>{card['example']}</p>
+    # Show card with toggle button integrated
+    col_left, col_center, col_right = st.columns([1, 3, 1])
+    
+    with col_center:
+        if not st.session_state.is_flipped:
+            # Front of card - show word
+            st.markdown(f"""
+            <div class="card-container">
+                <h4 style='opacity: 0.8; font-size: 14px; text-transform: uppercase;'>WORD</h4>
+                <h1 style='font-size: 48px; margin: 30px 0;'>{card['word']}</h1>
+                <p style='font-size: 18px; opacity: 0.9;'>👇 Click button below to flip</p>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        else:
+            # Back of card - show definition
+            st.markdown(f"""
+            <div class="card-container">
+                <h4 style='opacity: 0.8; font-size: 14px; text-transform: uppercase;'>DEFINITION</h4>
+                <h2 style='font-size: 28px; margin: 20px 0;'>{card['definition']}</h2>
+                <div style='background: rgba(255,255,255,0.2); padding: 20px; border-radius: 10px; margin-top: 30px;'>
+                    <h4 style='opacity: 0.8; font-size: 14px; text-transform: uppercase;'>EXAMPLE</h4>
+                    <p style='font-size: 18px; font-style: italic;'>{card['example']}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # Navigation buttons
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("⬅️ Previous", disabled=(st.session_state.current_card == 0)):
-            prev_card()
-            st.rerun()
-    
-    with col2:
-        if st.button("🔄 Flip Card"):
-            flip_card()
-            st.rerun()
-    
+    # Navigation buttons - simplified layout
     if st.session_state.study_mode == 'quiz' and st.session_state.is_flipped:
+        # Quiz mode - show correct/incorrect buttons
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            if st.button("⬅️ Previous", disabled=(st.session_state.current_card == 0), key="prev_quiz"):
+                prev_card()
+                st.rerun()
+        
+        with col2:
+            if st.button("🔄 Show Word", key="flip_quiz"):
+                flip_card()
+                st.rerun()
+        
         with col3:
-            if st.button("❌ Incorrect"):
+            if st.button("❌ Incorrect", key="incorrect_btn"):
                 next_card(correct=False)
                 st.rerun()
+        
         with col4:
-            if st.button("✅ Correct"):
+            if st.button("✅ Correct", key="correct_btn"):
                 next_card(correct=True)
                 st.rerun()
     else:
+        # Study mode - regular navigation
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("⬅️ Previous", disabled=(st.session_state.current_card == 0), key="prev_study"):
+                prev_card()
+                st.rerun()
+        
+        with col2:
+            flip_text = "🔄 Show Word" if st.session_state.is_flipped else "🔄 Show Answer"
+            if st.button(flip_text, key="flip_study"):
+                flip_card()
+                st.rerun()
+        
         with col3:
-            pass
-        with col4:
             is_last = st.session_state.current_card == len(st.session_state.shuffled_cards) - 1
-            if st.button("Finish ✓" if is_last else "Next ➡️"):
+            next_text = "Finish ✓" if is_last else "Next ➡️"
+            if st.button(next_text, key="next_study"):
                 next_card()
                 st.rerun()
 
